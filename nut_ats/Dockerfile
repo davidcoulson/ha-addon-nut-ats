@@ -13,18 +13,18 @@ COPY patches /patches
 RUN \
     apt-get update \
     && apt-get install -y --no-install-recommends \
-        autoconf=2.72-3.1 \
-        automake=1:1.17-4 \
-        build-essential=12.12 \
-        libltdl-dev=2.5.4-4 \
-        libmodbus-dev=3.1.11-2 \
-        libsnmp-dev=5.9.4+dfsg-2+deb13u1 \
-        libssl-dev=3.5.6-1~deb13u2 \
-        libusb-1.0-0-dev=2:1.0.28-1 \
-        libxml2-dev=2.12.7+dfsg+really2.9.14-2.1+deb13u3 \
-        libtool=2.5.4-4 \
-        patch=2.8-2 \
-        pkg-config=1.8.1-4 \
+        autoconf \
+        automake \
+        build-essential \
+        libltdl-dev \
+        libmodbus-dev \
+        libsnmp-dev \
+        libssl-dev \
+        libusb-1.0-0-dev \
+        libxml2-dev \
+        libtool \
+        patch \
+        pkg-config \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -59,12 +59,12 @@ COPY --from=builder /app /
 # Setup app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        libltdl7=2.5.4-4 \
-        libmodbus5=3.1.11-2 \
-        libsnmp40t64=5.9.4+dfsg-2+deb13u1 \
-        libusb-1.0-0=2:1.0.28-1 \
-        libxml2=2.12.7+dfsg+really2.9.14-2.1+deb13u3 \
-        usbutils=1:018-2 \
+        libltdl7 \
+        libmodbus5 \
+        libsnmp40t64 \
+        libusb-1.0-0 \
+        libxml2 \
+        usbutils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -86,20 +86,20 @@ ARG BUILD_VERSION
 
 # Labels
 LABEL \
-    io.hass.name="${BUILD_NAME}" \
-    io.hass.description="${BUILD_DESCRIPTION}" \
-    io.hass.arch="${BUILD_ARCH}" \
-    io.hass.type="app" \
-    io.hass.version=${BUILD_VERSION} \
+    io.hass.name \
+    io.hass.description \
+    io.hass.arch \
+    io.hass.type \
+    io.hass.version \
     maintainer="Dale Higgs <dale3h@addons.community>" \
-    org.opencontainers.image.title="${BUILD_NAME}" \
-    org.opencontainers.image.description="${BUILD_DESCRIPTION}" \
+    org.opencontainers.image.title \
+    org.opencontainers.image.description \
     org.opencontainers.image.vendor="Home Assistant Community Apps" \
     org.opencontainers.image.authors="Dale Higgs <dale3h@addons.community>" \
-    org.opencontainers.image.licenses="MIT" \
-    org.opencontainers.image.url="https://frenck.dev/home-assistant-apps" \
-    org.opencontainers.image.source="https://github.com/${BUILD_REPOSITORY}" \
-    org.opencontainers.image.documentation="https://github.com/${BUILD_REPOSITORY}/blob/main/README.md" \
-    org.opencontainers.image.created=${BUILD_DATE} \
-    org.opencontainers.image.revision=${BUILD_REF} \
-    org.opencontainers.image.version=${BUILD_VERSION}
+    org.opencontainers.image.licenses \
+    org.opencontainers.image.url \
+    org.opencontainers.image.source \
+    org.opencontainers.image.documentation \
+    org.opencontainers.image.created \
+    org.opencontainers.image.revision \
+    org.opencontainers.image.version

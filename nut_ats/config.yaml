@@ -1,6 +1,6 @@
 ---
 name: Network UPS Tools (ATS patch)
-version: 0.18.1-ats1
+version: 0.18.1-ats2
 slug: nut_ats
 description: NUT add-on 0.18.1 with the apc_ats output phase table patch (networkupstools/nut#3763)
 url: https://github.com/davidcoulson/ha-addon-nut-ats
