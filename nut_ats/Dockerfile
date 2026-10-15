@@ -41,7 +41,7 @@ RUN \
     && cd "${NUT_FILENAME%.tar.gz}" \
     && for nut_patch in /patches/*.patch; do \
         echo "Applying ${nut_patch}..." \
-        && patch -p1 --batch --forward -i "${nut_patch}"; \
+        && patch -p1 --batch --forward -i "${nut_patch}" || exit 1; \
     done \
     && ./configure --prefix=/usr --datadir=/usr/share/nut --sysconfdir=/etc/nut --with-drvpath=/usr/libexec/nut \
         --with-usb --with-modbus --with-snmp --with-ssl \

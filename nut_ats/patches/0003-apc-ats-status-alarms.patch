@@ -1,0 +1,152 @@
+diff --git a/drivers/apc-ats-mib.c b/drivers/apc-ats-mib.c
+index 9ae1ea3..a7e3f96 100644
+--- a/drivers/apc-ats-mib.c
++++ b/drivers/apc-ats-mib.c
+@@ -24,7 +24,7 @@
+ 
+ #include "apc-ats-mib.h"
+ 
+-#define APC_ATS_MIB_VERSION  "0.61"
++#define APC_ATS_MIB_VERSION  "0.62"
+ 
+ #define APC_ATS_SYSOID       ".1.3.6.1.4.1.318.1.3.11"
+ #define APC_ATS_OID_MODEL_NAME ".1.3.6.1.4.1.318.1.1.8.1.5.0"
+@@ -56,6 +56,108 @@ static info_lkp_t apc_ats_outletgroups_status_info[] = {
+ 	info_lkp_sentinel
+ };
+ 
++/* atsStatusDeviceStatus alarms: only the faulty value raises an alarm */
++static info_lkp_t apc_ats_comm_alarm_info[] = {
++	info_lkp_default(3, "Communication with the transfer switch lost!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_redundancy_alarm_info[] = {
++	info_lkp_default(1, "Redundancy lost!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_overcurrent_alarm_info[] = {
++	info_lkp_default(1, "Output overcurrent!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_ps5v_alarm_info[] = {
++	info_lkp_default(1, "5V power supply failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_ps24v_alarm_info[] = {
++	info_lkp_default(1, "24V power supply failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_ps24v_source_b_alarm_info[] = {
++	info_lkp_default(1, "Source B 24V power supply failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_ps12v_plus_alarm_info[] = {
++	info_lkp_default(1, "+12V power supply failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_ps12v_minus_alarm_info[] = {
++	info_lkp_default(1, "-12V power supply failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_switch_alarm_info[] = {
++	info_lkp_default(1, "Transfer switch failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_source_a_alarm_info[] = {
++	info_lkp_default(1, "Source A failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_source_b_alarm_info[] = {
++	info_lkp_default(1, "Source B failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_phase_sync_alarm_info[] = {
++	info_lkp_default(2, "Sources out of sync!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_hardware_alarm_info[] = {
++	info_lkp_default(1, "Hardware failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_ps3v3_alarm_info[] = {
++	info_lkp_default(1, "3.3V power supply failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_ps1v0_alarm_info[] = {
++	info_lkp_default(1, "1.0V power supply failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_vboost_source_a_alarm_info[] = {
++	info_lkp_default(1, "Source A 48V power supply failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_vboost_source_b_alarm_info[] = {
++	info_lkp_default(1, "Source B 48V power supply failure!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_fuse_source_a_alarm_info[] = {
++	info_lkp_default(2, "Source A fuse open!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_fuse_source_b_alarm_info[] = {
++	info_lkp_default(2, "Source B fuse open!"),
++	info_lkp_sentinel
++};
++
++static info_lkp_t apc_ats_overcurrent_status_info[] = {
++	info_lkp_default(1, "OVER"),	/* atsOverCurrent */
++	info_lkp_default(2, ""),	/* atsCurrentOK */
++	info_lkp_sentinel
++};
++
+ /* APC ATS Snmp2NUT lookup table */
+ static snmp_info_t apc_ats_mib[] = {
+ 
+@@ -131,6 +233,29 @@ static snmp_info_t apc_ats_mib[] = {
+ 	/* FIXME: RFC for device.status! */
+ 	/* atsStatusVoltageOutStatus.0 = INTEGER: ok(2) */
+ 	snmp_info_default("ups.status", 0, 1, ".1.3.6.1.4.1.318.1.1.8.5.1.15.0", NULL, SU_FLAG_OK, &apc_ats_output_status_info[0]),
++	/* atsStatusOverCurrentState.0 = INTEGER: atsCurrentOK(2) */
++	snmp_info_default("ups.status", 0, 1, ".1.3.6.1.4.1.318.1.1.8.5.1.4.0", NULL, SU_FLAG_OK, &apc_ats_overcurrent_status_info[0]),
++	/* Not all models implement every atsStatusDeviceStatus object: missing
++	 * ones are dropped at startup */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.1.0", NULL, SU_FLAG_OK, &apc_ats_comm_alarm_info[0]),	/* atsStatusCommStatus */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.3.0", NULL, SU_FLAG_OK, &apc_ats_redundancy_alarm_info[0]),	/* atsStatusRedundancyState */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.4.0", NULL, SU_FLAG_OK, &apc_ats_overcurrent_alarm_info[0]),	/* atsStatusOverCurrentState */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.5.0", NULL, SU_FLAG_OK, &apc_ats_ps5v_alarm_info[0]),	/* atsStatus5VPowerSupply */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.6.0", NULL, SU_FLAG_OK, &apc_ats_ps24v_alarm_info[0]),	/* atsStatus24VPowerSupply */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.7.0", NULL, SU_FLAG_OK, &apc_ats_ps24v_source_b_alarm_info[0]),	/* atsStatus24VSourceBPowerSupply */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.8.0", NULL, SU_FLAG_OK, &apc_ats_ps12v_plus_alarm_info[0]),	/* atsStatusPlus12VPowerSupply */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.9.0", NULL, SU_FLAG_OK, &apc_ats_ps12v_minus_alarm_info[0]),	/* atsStatusMinus12VPowerSupply */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.10.0", NULL, SU_FLAG_OK, &apc_ats_switch_alarm_info[0]),	/* atsStatusSwitchStatus */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.12.0", NULL, SU_FLAG_OK, &apc_ats_source_a_alarm_info[0]),	/* atsStatusSourceAStatus */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.13.0", NULL, SU_FLAG_OK, &apc_ats_source_b_alarm_info[0]),	/* atsStatusSourceBStatus */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.14.0", NULL, SU_FLAG_OK, &apc_ats_phase_sync_alarm_info[0]),	/* atsStatusPhaseSyncStatus */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.16.0", NULL, SU_FLAG_OK, &apc_ats_hardware_alarm_info[0]),	/* atsStatusHardwareStatus */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.17.0", NULL, SU_FLAG_OK, &apc_ats_ps3v3_alarm_info[0]),	/* atsStatus3dot3VPowerSupply */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.18.0", NULL, SU_FLAG_OK, &apc_ats_ps1v0_alarm_info[0]),	/* atsStatus1Dot0VPowerSupply */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.19.0", NULL, SU_FLAG_OK, &apc_ats_vboost_source_a_alarm_info[0]),	/* atsStatusVBoostSourceA */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.20.0", NULL, SU_FLAG_OK, &apc_ats_vboost_source_b_alarm_info[0]),	/* atsStatusVBoostSourceB */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.21.0", NULL, SU_FLAG_OK, &apc_ats_fuse_source_a_alarm_info[0]),	/* atsStatusFuseSourceA */
++	snmp_info_default("ups.alarm", ST_FLAG_STRING, SU_INFOSIZE, ".1.3.6.1.4.1.318.1.1.8.5.1.22.0", NULL, SU_FLAG_OK, &apc_ats_fuse_source_b_alarm_info[0]),	/* atsStatusFuseSourceB */
+ 
+ 	/* Outlet groups collection */
+ 	/* Note: prefer the OutputBank data to the ConfigBank ones */
